@@ -6,15 +6,8 @@ separate and render the various shapes within the file.
 
 ## Usage
 The application is Dockerized for use on any platform. To run, pull the repo and execute the following 
-commands in the project dir:
-```bash
-docker compose build
-```
-This may take a few minutes as Docker builds the image. Next, run:
+command in the project dir:
 ```bash
 docker compose up
 ```
-This will run the image and create two directories in the current working directory. 
-
-- **build** - this contains all the build files necessary to build the image
-- **images** - this contains the *.png* map files
+This will build then run the image and output the result of the application into the users current directory 

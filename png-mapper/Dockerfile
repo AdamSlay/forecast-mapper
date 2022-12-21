@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:jammy
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential \
@@ -6,11 +6,6 @@ RUN apt-get update && \
       gdb \
       cmake
 
-RUN useradd -u 8877 png-user
-COPY --chown=png-user: png-mapper /src/vol
+RUN mkdir -p /src/vol /base/images && useradd -u 8887 png-user && chown png-user /src /src/vol /base/images
+COPY --chown=png-user: png-mapper/ /src
 USER png-user
-
-# docker run -it --rm --name=png-mapper \
-#--mount type=bind,source=${PWD},target=/src \
-#png-mapper-builder \
-#bash

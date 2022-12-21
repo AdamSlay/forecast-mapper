@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <cstdio>
@@ -22,13 +23,12 @@ int getY(const double &lat){
     const double height = 15360;  // the conversion equation from lat/lon to x/y is tiny, so this is the ratio scaled up
     const double PI = 3.14159265359;
     const double latRad = lat*PI/180;
-    // get y value
     const double mercN = log(tan((PI/4)+(latRad/2)));
     const double y = (height/2)-(width*mercN/(2*PI));
     return (int)round(y) - 5000;  // shift transformation to make it fit within the frame
 }
 
-void draw_image(std::vector<std::vector<std::vector<double>>> &shapes){
+void draw_image(const std::vector<std::vector<std::vector<double>>> &shapes){
     bitmap_image image(720,480);
     image.set_all_channels(255,255,255);
     image_drawer draw(image);
@@ -47,11 +47,10 @@ void draw_image(std::vector<std::vector<std::vector<double>>> &shapes){
             draw.line_segment(x1,y1,x2,y2);
         }
     }
-    image.save_image("../images/output.png");
+    image.save_image("/base/images/output.png");
 }
 
-void read_vol() {
-
+void read_vol(const std::string fn) {
 }
 
 int main() {

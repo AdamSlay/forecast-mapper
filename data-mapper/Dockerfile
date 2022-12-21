@@ -10,22 +10,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   libgdal-dev \
   gfortran
 
-# copy source, origin
+# copy source, destination
 COPY data-mapper/requirements.txt .
 
 # run command, '--no-cache-dir' to remove install files(*.tar.gz and other such files)
 # this helps keep the image small
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && useradd --create-home -u 8887 mapper-user && mkdir -p /src/data-vol
 
-RUN useradd --create-home mapper-user
 WORKDIR /home/mapper-user
 
 #change permissions of /data so forecast-user has ownership
-COPY --chown=mapper-user:mapper-user data-mapper/data data/
-COPY --chown=mapper-user:mapper-user data-mapper /src/vol
-COPY data-mapper/src/mapper.py .
-COPY data-mapper/src/api.py .
+COPY --chown=mapper-user: data-mapper/data data/
+COPY --chown=mapper-user: data-mapper/src/ .
+
+RUN chown mapper-user /src/data-vol
+
 USER mapper-user
 
 # CMD to run when the container is opened
-CMD ["python3", "mapper.py"]
+CMD ["python3", "src/mapper.py"]

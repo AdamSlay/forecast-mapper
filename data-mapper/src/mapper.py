@@ -1,5 +1,6 @@
 import asyncio
 import csv
+import os
 import time
 import aiohttp
 import pandas as pd
@@ -30,7 +31,7 @@ us_states = [
 
 async def main() -> int:
     await asyncio.gather(*map(loop, oklahoma))
-    with open(r"/src/vol/healthcheck.txt", "w") as file:
+    with open(r"/src/data-vol/healthcheck.txt", "w") as file:
         file.write("healthcheck complete\n")
     return 0
 
@@ -73,11 +74,16 @@ async def fetch_data(stations: pd.DataFrame):
                 # forecast_args order: temp, windSp, windDir, lat, lon
             else:
                 stat_data.append([None, None, None, loc["latitude"], loc["longitude"]])
-    with open(r"/src/vol/stat_data.csv", "w", newline="\n") as file:
+    with open(r"/src/data-vol/stat_data.csv", "w", newline="\n") as file:
         for line in stat_data:
             file.write(f"{line[0]}, {line[1]}, {line[2]}, {line[3]}, {line[4]}\n")
 
 
 if __name__ == "__main__":
+    try:
+        os.remove("/src/data-vol/healthcheck.txt")
+    except:
+        print("healthcheck.txt does not exist yet")
     asyncio.run(main())
     time.sleep(7)
+    # os.remove("/src/vol/healthcheck.txt")

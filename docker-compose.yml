@@ -6,9 +6,11 @@ services:
       dockerfile: data-mapper/Dockerfile
       context: .
     volumes:
-      - data-share:/src/vol
+      - type: volume
+        source: data-share
+        target: /src/data-vol
     healthcheck:
-      test: ["CMD-SHELL", "test -f /src/vol/healthcheck.txt"]
+      test: ["CMD-SHELL", "test -f /src/data-vol/healthcheck.txt"]
       interval: 5s
       retries: 10
       start_period: 20s
@@ -22,12 +24,14 @@ services:
     volumes:
       - type: bind
         source: ./
-        target: /src
-      - data-share:/src/vol
+        target: /base/images
+      - type: volume
+        source: data-share
+        target: /src/vol
     entrypoint: /bin/sh
     depends_on: 
       data-mapper:
         condition: service_healthy
-    command: ["-c", "whoami && cd /src/png-mapper/ && sh ./build.sh"]
+    command: ["-c", "whoami && cd /src/ && sh ./build.sh"]
 volumes:
     data-share:
