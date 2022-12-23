@@ -9,12 +9,12 @@ services:
       - type: volume
         source: data-share
         target: /src/data-vol
-    healthcheck:
-      test: ["CMD-SHELL", "test -f /src/data-vol/healthcheck.txt"]
-      interval: 5s
-      retries: 10
-      start_period: 20s
-      timeout: 1s
+#    healthcheck:
+#      test: ["CMD-SHELL", "test -f /src/data-vol/healthcheck.txt"]
+#      interval: 5s
+#      retries: 10
+#      start_period: 300s
+#      timeout: 1s
     command: ["python3", "mapper.py"]
 
   png-mapper:
@@ -29,9 +29,9 @@ services:
         source: data-share
         target: /src/vol
     entrypoint: /bin/sh
-    depends_on: 
-      data-mapper:
-        condition: service_healthy
+#    depends_on: 
+#      data-mapper:
+#        condition: service_healthy
     command: ["-c", "whoami && cd /src/ && sh ./build.sh"]
 volumes:
     data-share:

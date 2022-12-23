@@ -1,14 +1,15 @@
 import asyncio
 import csv
 import os
-import time
 import aiohttp
+import socket
 import pandas as pd
 
+from time import sleep
+from datetime import datetime
 from colorama import Fore
 from meteostat import Stations
 from api import Forecast
-
 
 oklahoma = [["Oklahoma", "OK", "40"]]
 # State, Abbreviation, FP code
@@ -31,8 +32,6 @@ us_states = [
 
 async def main() -> int:
     await asyncio.gather(*map(loop, oklahoma))
-    with open(r"/src/data-vol/healthcheck.txt", "w") as file:
-        file.write("healthcheck complete\n")
     return 0
 
 
@@ -41,7 +40,7 @@ async def loop(state: list) -> None:
     state_abv = state[1]
     stations = create_df(state_abv)
 
-    task_1 = asyncio.create_task(fetch_data(stations))
+    task_1 = asyncio.create_task(fetch_data(stations, state_abv))
     await task_1
 
 
@@ -58,32 +57,56 @@ def create_df(state_abv: str) -> pd.DataFrame:
         print(Fore.RED + f"Error in create_df while working on {state_abv}: {e}")
 
 
-async def fetch_data(stations: pd.DataFrame):
-    # separate station coordinates from stations
+async def fetch_data(stations: pd.DataFrame, state_abv: str):
+    # separate station coordinates from stations, create appropriate dirs in shared vol
     coords = stations[["latitude", "longitude"]]
-    stat_data = []
+    day = datetime.today().strftime('%Y-%m-%d')
+    hour = datetime.utcnow().isoformat(timespec='hours')
+    dir_path = f'/src/data-vol/{str(day)}/{str(hour)}'
+    try:
+        os.makedirs(dir_path)
+    except Exception as e:
+        print(f"Could not create {dir_path}: {e}")
 
     # fetch data from weather.gov api and put in Queue
+    stat_data = []
     async with aiohttp.ClientSession(trust_env=True) as session:
         for row, st_id in enumerate(stations["icao"]):
             loc = coords.iloc[row]
             api_req = Forecast(loc, session)
             forecast_url = await api_req.get_json()
             if forecast_url:
-                await api_req.get_forecast(forecast_url, stat_data)
-                # forecast_args order: temp, windSp, windDir, lat, lon
+                try:
+                    await api_req.get_forecast(forecast_url, stat_data)
+                    # forecast_args order: temp, windSp, windDir, lat, lon
+                except:
+                    stat_data.append([None, None, None, loc["latitude"], loc["longitude"]])
             else:
                 stat_data.append([None, None, None, loc["latitude"], loc["longitude"]])
-    with open(r"/src/data-vol/stat_data.csv", "w", newline="\n") as file:
-        for line in stat_data:
-            file.write(f"{line[0]}, {line[1]}, {line[2]}, {line[3]}, {line[4]}\n")
+
+    # Write data to csv and save to shared vol
+    fn = f"{state_abv}-{hour}.csv"
+    with open(rf"/src/data-vol/{day}/{hour}/{fn}", "w", newline="\n") as file:
+        fields = ['temp(F)', 'windSp(mph)', 'windDir', 'lat', 'lon']
+        write = csv.writer(file)
+        write.writerow(fields)
+        write.writerows(stat_data)
+
+
+def connect_to_container(host: str, port: int) -> None:
+    # Check that PNG-Mapper is up and running to let it know this container is done
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(2)
+    for i in range(10):
+        result = sock.connect_ex((host, port))
+        if result == 0:
+            print(f"Connection to port {port} on {host} established.")
+            break
+        else:
+            print(f"Port {port} on {host} is not responding. Attempt to connect #{i+1}")
+            sleep(2)
 
 
 if __name__ == "__main__":
-    try:
-        os.remove("/src/data-vol/healthcheck.txt")
-    except:
-        print("healthcheck.txt does not exist yet")
     asyncio.run(main())
-    time.sleep(7)
-    # os.remove("/src/vol/healthcheck.txt")
+    connect_to_container('png-mapper', 8877)

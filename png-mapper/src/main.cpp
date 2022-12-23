@@ -58,11 +58,5 @@ int main() {
     Shape shape("../data/okcounties.shp");
     shps = shape.get_shapes();
     draw_image(shps);
-    if (remove("/src/vol/healthcheck.txt") != 0) {
-        cerr << "/src/vol/healthcheck.txt could not be deleted" << endl;
-    }
-    else {
-        cout << "/src/vol/healthcheck.txt successfully deleted" << endl;
-    }
     return 0;
 }

@@ -16,7 +16,7 @@ class Forecast:
         print(Fore.WHITE + f'getting json - {url}', flush=True)
         try:
             get_req = await self.session.get(url)  # get request
-            forecast_url = await get_req.json()  # convert response to json
+            forecast_url = await get_req.json(content_type=None)  # convert response to json
             if 'properties' in forecast_url:
                 return forecast_url['properties']['forecastHourly']  # return the forecastHourly link
             else:
@@ -24,14 +24,14 @@ class Forecast:
             await asyncio.sleep(10)
         except Exception as e:
             print(Fore.RED + f"Error in get_json() while requesting {url}: {e}", flush=True)
-            raise Exception
+            # raise Exception
 
     async def get_forecast(self, forecast_url: str, stat_data: list) -> list:
         # second api call, gets forecast from forecast url
         print(Fore.WHITE + f'getting forecast for {self.lat}, {self.lon} - {forecast_url}', flush=True)
         try:  # asynchronous http calls using aiohttp
             get_req = await self.session.get(forecast_url)  # get request
-            forecast_json = await get_req.json()  # convert response to json
+            forecast_json = await get_req.json(content_type=None)  # convert response to json
             if 'properties' in forecast_json:
                 args = ["temperature", "windSpeed", "windDirection"]
                 current_forecast = forecast_json['properties']['periods'][0]  # '0' refers to the most current forecast
